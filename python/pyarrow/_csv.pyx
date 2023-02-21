@@ -18,6 +18,7 @@
 # cython: profile=False
 # distutils: language = c++
 # cython: language_level = 3
+from enum import Enum
 
 from cython.operator cimport dereference as deref
 
@@ -1274,6 +1275,17 @@ def open_csv(input_file, read_options=None, parse_options=None,
                  move(c_convert_options), memory_pool)
     return reader
 
+cdef class QuotingStyle(_Weakrefable):
+        # /// Only enclose values in quotes which need them, because their CSV rendering can
+        # /// contain quotes itself (e.g. strings or binary values)
+        NEEDED = 1,
+        # /// Enclose all valid values in quotes. Nulls are not quoted. May cause readers to
+        # /// interpret all values as strings if schema is inferred.
+        ALLVALID = 2,
+        # /// Do not enclose any values in quotes. Prevents values from containing quotes ("),
+        # /// cell delimiters (,) or line endings (\\r, \\n), (following RFC4180). If values
+        # /// contain these characters, an error is caused when attempting to write.
+        NONE = 3
 
 cdef class WriteOptions(_Weakrefable):
     """
@@ -1294,7 +1306,7 @@ cdef class WriteOptions(_Weakrefable):
     __slots__ = ()
 
     def __init__(self, *, include_header=None, batch_size=None,
-                 delimiter=None):
+                 delimiter=None, quoting_style=None):
         self.options.reset(new CCSVWriteOptions(CCSVWriteOptions.Defaults()))
         if include_header is not None:
             self.include_header = include_header
@@ -1302,6 +1314,9 @@ cdef class WriteOptions(_Weakrefable):
             self.batch_size = batch_size
         if delimiter is not None:
             self.delimiter = delimiter
+        if quoting_style is not None:
+            self.quoting_style = quoting_style
+
 
     @property
     def include_header(self):
@@ -1336,6 +1351,14 @@ cdef class WriteOptions(_Weakrefable):
     @delimiter.setter
     def delimiter(self, value):
         deref(self.options).delimiter = _single_char(value)
+
+    @property
+    def quoting_style(self):
+       return deref(self.options).quoting_style
+
+    @quoting_style.setter
+    def quoting_style(self, value):
+        deref(self.options).quoting_style = value
 
     @staticmethod
     cdef WriteOptions wrap(CCSVWriteOptions options):

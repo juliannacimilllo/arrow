@@ -42,7 +42,7 @@ import numpy as np
 import pyarrow as pa
 from pyarrow.csv import (
     open_csv, read_csv, ReadOptions, ParseOptions, ConvertOptions, ISO8601,
-    write_csv, WriteOptions, CSVWriter, InvalidRow)
+    write_csv, WriteOptions, CSVWriter, InvalidRow, QuotingStyle)
 from pyarrow.tests import util
 
 
@@ -342,6 +342,16 @@ def test_write_options():
         opts = cls()
         opts.batch_size = 0
         opts.validate()
+
+# def test_write_options_no_quotes():
+#     cls = WriteOptions
+#     opts = cls()
+#
+#     check_options_class(cls, quoting_style=QuotingStyle.NEEDED)
+#     assert opts.quoting_style == QuotingStyle.NEEDED
+#
+#     opts.validate()
+
 
 
 class BaseTestCSV(abc.ABC):

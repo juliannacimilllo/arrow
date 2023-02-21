@@ -16,6 +16,7 @@
 # under the License.
 
 # distutils: language = c++
+from enum import Enum
 
 from pyarrow.includes.common cimport *
 
@@ -1771,6 +1772,7 @@ cdef extern from "arrow/csv/api.h" namespace "arrow::csv" nogil:
         int32_t batch_size
         unsigned char delimiter
         CIOContext io_context
+        CQuotingStyle quoting_style
 
         CCSVWriteOptions()
         CCSVWriteOptions(CCSVWriteOptions&&)
@@ -1779,6 +1781,18 @@ cdef extern from "arrow/csv/api.h" namespace "arrow::csv" nogil:
         CCSVWriteOptions Defaults()
 
         CStatus Validate()
+
+    class CQuotingStyle(Enum):
+        # /// Only enclose values in quotes which need them, because their CSV rendering can
+        # /// contain quotes itself (e.g. strings or binary values)
+        NEEDED = 1,
+        # /// Enclose all valid values in quotes. Nulls are not quoted. May cause readers to
+        # /// interpret all values as strings if schema is inferred.
+        ALLVALID = 2,
+        # /// Do not enclose any values in quotes. Prevents values from containing quotes ("),
+        # /// cell delimiters (,) or line endings (\\r, \\n), (following RFC4180). If values
+        # /// contain these characters, an error is caused when attempting to write.
+        NONE = 3
 
     cdef cppclass CCSVReader" arrow::csv::TableReader":
         @staticmethod
